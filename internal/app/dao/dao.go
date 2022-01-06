@@ -6,15 +6,15 @@ import (
 	"github.com/google/wire"
 	"gorm.io/gorm"
 
-	"github.com/LyricTian/gin-admin/v8/internal/app/config"
-	"github.com/LyricTian/gin-admin/v8/internal/app/dao/menu"
-	"github.com/LyricTian/gin-admin/v8/internal/app/dao/role"
-	"github.com/LyricTian/gin-admin/v8/internal/app/dao/user"
-	"github.com/LyricTian/gin-admin/v8/internal/app/dao/util"
+	"gin-admin/internal/app/config"
+	"gin-admin/internal/app/dao/menu"
+	"gin-admin/internal/app/dao/role"
+	"gin-admin/internal/app/dao/user"
+	"gin-admin/internal/app/dao/util"
 ) // end
 
-// RepoSet repo injection
-var RepoSet = wire.NewSet(
+// DaoSet dao injection
+var DaoSet = wire.NewSet(
 	util.TransSet,
 	menu.MenuActionResourceSet,
 	menu.MenuActionSet,
@@ -27,14 +27,14 @@ var RepoSet = wire.NewSet(
 
 // Define repo type alias
 type (
-	TransRepo              = util.Trans
-	MenuActionResourceRepo = menu.MenuActionResourceRepo
-	MenuActionRepo         = menu.MenuActionRepo
-	MenuRepo               = menu.MenuRepo
-	RoleMenuRepo           = role.RoleMenuRepo
-	RoleRepo               = role.RoleRepo
-	UserRoleRepo           = user.UserRoleRepo
-	UserRepo               = user.UserRepo
+	TransDao              = util.Trans
+	MenuActionResourceDao = menu.MenuActionResourceDao
+	MenuActionDao         = menu.MenuActionDao
+	MenuDao               = menu.MenuDao
+	RoleMenuDao           = role.RoleMenuDao
+	RoleDao               = role.RoleDao
+	UserRoleDao           = user.UserRoleDao
+	UserDao               = user.UserDao
 ) // end
 
 // Auto migration for given models

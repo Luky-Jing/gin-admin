@@ -5,9 +5,9 @@ import (
 
 	"gorm.io/gorm"
 
-	"github.com/LyricTian/gin-admin/v8/internal/app/dao/util"
-	"github.com/LyricTian/gin-admin/v8/internal/app/schema"
-	"github.com/LyricTian/gin-admin/v8/pkg/util/structure"
+	"gin-admin/internal/app/dao/util"
+	"gin-admin/internal/app/schema"
+	"gin-admin/pkg/util/structure"
 )
 
 func GetUserRoleDB(ctx context.Context, defDB *gorm.DB) *gorm.DB {

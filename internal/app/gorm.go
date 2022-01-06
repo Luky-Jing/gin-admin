@@ -7,9 +7,9 @@ import (
 
 	"gorm.io/gorm"
 
-	"github.com/LyricTian/gin-admin/v8/internal/app/config"
-	"github.com/LyricTian/gin-admin/v8/internal/app/dao"
-	"github.com/LyricTian/gin-admin/v8/pkg/gormx"
+	"gin-admin/internal/app/config"
+	"gin-admin/internal/app/dao"
+	"gin-admin/pkg/gormx"
 )
 
 func InitGormDB() (*gorm.DB, func(), error) {

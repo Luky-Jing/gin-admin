@@ -15,8 +15,8 @@ import (
 
 	"github.com/urfave/cli/v2"
 
-	"github.com/LyricTian/gin-admin/v8/internal/app"
-	"github.com/LyricTian/gin-admin/v8/pkg/logger"
+	"gin-admin/internal/app"
+	"gin-admin/pkg/logger"
 )
 
 // Usage: go build -ldflags "-X main.VERSION=x.x.x"

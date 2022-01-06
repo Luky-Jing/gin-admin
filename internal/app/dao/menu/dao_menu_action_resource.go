@@ -2,22 +2,21 @@ package menu
 
 import (
 	"context"
-
 	"github.com/google/wire"
 	"gorm.io/gorm"
 
-	"github.com/LyricTian/gin-admin/v8/internal/app/dao/util"
-	"github.com/LyricTian/gin-admin/v8/internal/app/schema"
-	"github.com/LyricTian/gin-admin/v8/pkg/errors"
+	"gin-admin/internal/app/dao/util"
+	"gin-admin/internal/app/schema"
+	"gin-admin/pkg/errors"
 )
 
-var MenuActionResourceSet = wire.NewSet(wire.Struct(new(MenuActionResourceRepo), "*"))
+var MenuActionResourceSet = wire.NewSet(wire.Struct(new(MenuActionResourceDao), "*"))
 
-type MenuActionResourceRepo struct {
+type MenuActionResourceDao struct {
 	DB *gorm.DB
 }
 
-func (a *MenuActionResourceRepo) getQueryOption(opts ...schema.MenuActionResourceQueryOptions) schema.MenuActionResourceQueryOptions {
+func (a *MenuActionResourceDao) getQueryOption(opts ...schema.MenuActionResourceQueryOptions) schema.MenuActionResourceQueryOptions {
 	var opt schema.MenuActionResourceQueryOptions
 	if len(opts) > 0 {
 		opt = opts[0]
@@ -25,7 +24,7 @@ func (a *MenuActionResourceRepo) getQueryOption(opts ...schema.MenuActionResourc
 	return opt
 }
 
-func (a *MenuActionResourceRepo) Query(ctx context.Context, params schema.MenuActionResourceQueryParam, opts ...schema.MenuActionResourceQueryOptions) (*schema.MenuActionResourceQueryResult, error) {
+func (a *MenuActionResourceDao) Query(ctx context.Context, params schema.MenuActionResourceQueryParam, opts ...schema.MenuActionResourceQueryOptions) (*schema.MenuActionResourceQueryResult, error) {
 	opt := a.getQueryOption(opts...)
 
 	db := GetMenuActionResourceDB(ctx, a.DB)
@@ -58,7 +57,7 @@ func (a *MenuActionResourceRepo) Query(ctx context.Context, params schema.MenuAc
 	return qr, nil
 }
 
-func (a *MenuActionResourceRepo) Get(ctx context.Context, id uint64, opts ...schema.MenuActionResourceQueryOptions) (*schema.MenuActionResource, error) {
+func (a *MenuActionResourceDao) Get(ctx context.Context, id uint64, opts ...schema.MenuActionResourceQueryOptions) (*schema.MenuActionResource, error) {
 	db := GetMenuActionResourceDB(ctx, a.DB).Where("id=?", id)
 	var item MenuActionResource
 	ok, err := util.FindOne(ctx, db, &item)
@@ -71,29 +70,29 @@ func (a *MenuActionResourceRepo) Get(ctx context.Context, id uint64, opts ...sch
 	return item.ToSchemaMenuActionResource(), nil
 }
 
-func (a *MenuActionResourceRepo) Create(ctx context.Context, item schema.MenuActionResource) error {
+func (a *MenuActionResourceDao) Create(ctx context.Context, item schema.MenuActionResource) error {
 	eitem := SchemaMenuActionResource(item).ToMenuActionResource()
 	result := GetMenuActionResourceDB(ctx, a.DB).Create(eitem)
 	return errors.WithStack(result.Error)
 }
 
-func (a *MenuActionResourceRepo) Update(ctx context.Context, id uint64, item schema.MenuActionResource) error {
+func (a *MenuActionResourceDao) Update(ctx context.Context, id uint64, item schema.MenuActionResource) error {
 	eitem := SchemaMenuActionResource(item).ToMenuActionResource()
 	result := GetMenuActionResourceDB(ctx, a.DB).Where("id=?", id).Updates(eitem)
 	return errors.WithStack(result.Error)
 }
 
-func (a *MenuActionResourceRepo) Delete(ctx context.Context, id uint64) error {
+func (a *MenuActionResourceDao) Delete(ctx context.Context, id uint64) error {
 	result := GetMenuActionResourceDB(ctx, a.DB).Where("id=?", id).Delete(MenuActionResource{})
 	return errors.WithStack(result.Error)
 }
 
-func (a *MenuActionResourceRepo) DeleteByActionID(ctx context.Context, actionID uint64) error {
+func (a *MenuActionResourceDao) DeleteByActionID(ctx context.Context, actionID uint64) error {
 	result := GetMenuActionResourceDB(ctx, a.DB).Where("action_id=?", actionID).Delete(MenuActionResource{})
 	return errors.WithStack(result.Error)
 }
 
-func (a *MenuActionResourceRepo) DeleteByMenuID(ctx context.Context, menuID uint64) error {
+func (a *MenuActionResourceDao) DeleteByMenuID(ctx context.Context, menuID uint64) error {
 	subQuery := GetMenuActionDB(ctx, a.DB).Where("menu_id=?", menuID).Select("id")
 	result := GetMenuActionResourceDB(ctx, a.DB).Where("action_id IN (?)", subQuery).Delete(MenuActionResource{})
 	return errors.WithStack(result.Error)

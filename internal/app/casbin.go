@@ -6,7 +6,7 @@ import (
 	"github.com/casbin/casbin/v2"
 	"github.com/casbin/casbin/v2/persist"
 
-	"github.com/LyricTian/gin-admin/v8/internal/app/config"
+	"gin-admin/internal/app/config"
 )
 
 func InitCasbin(adapter persist.Adapter) (*casbin.SyncedEnforcer, func(), error) {

@@ -5,9 +5,9 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/wire"
 
-	"github.com/LyricTian/gin-admin/v8/internal/app/api"
-	"github.com/LyricTian/gin-admin/v8/internal/app/middleware"
-	"github.com/LyricTian/gin-admin/v8/pkg/auth"
+	"gin-admin/internal/app/api"
+	"gin-admin/internal/app/middleware"
+	"gin-admin/pkg/auth"
 )
 
 var _ IRouter = (*Router)(nil)

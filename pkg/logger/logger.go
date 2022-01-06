@@ -173,6 +173,14 @@ var (
 	Fatalf          = logrus.Fatalf
 	Panicf          = logrus.Panicf
 	Printf          = logrus.Printf
+	Traceln         = logrus.Traceln
+	Debugln         = logrus.Debugln
+	Infoln          = logrus.Infoln
+	Warnln          = logrus.Warnln
+	Errorln         = logrus.Errorln
+	Fatalln         = logrus.Fatalln
+	Panicln         = logrus.Panicln
+	Println         = logrus.Println
 	SetOutput       = logrus.SetOutput
 	SetReportCaller = logrus.SetReportCaller
 	StandardLogger  = logrus.StandardLogger

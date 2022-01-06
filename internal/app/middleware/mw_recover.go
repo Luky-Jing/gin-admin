@@ -6,9 +6,9 @@ import (
 	"io/ioutil"
 	"runtime"
 
-	"github.com/LyricTian/gin-admin/v8/internal/app/ginx"
-	"github.com/LyricTian/gin-admin/v8/pkg/errors"
-	"github.com/LyricTian/gin-admin/v8/pkg/logger"
+	"gin-admin/internal/app/ginx"
+	"gin-admin/pkg/errors"
+	"gin-admin/pkg/logger"
 	"github.com/gin-gonic/gin"
 )
 

@@ -2,22 +2,21 @@ package user
 
 import (
 	"context"
-
 	"github.com/google/wire"
 	"gorm.io/gorm"
 
-	"github.com/LyricTian/gin-admin/v8/internal/app/dao/util"
-	"github.com/LyricTian/gin-admin/v8/internal/app/schema"
-	"github.com/LyricTian/gin-admin/v8/pkg/errors"
+	"gin-admin/internal/app/dao/util"
+	"gin-admin/internal/app/schema"
+	"gin-admin/pkg/errors"
 )
 
-var UserSet = wire.NewSet(wire.Struct(new(UserRepo), "*"))
+var UserSet = wire.NewSet(wire.Struct(new(UserDao), "*"))
 
-type UserRepo struct {
+type UserDao struct {
 	DB *gorm.DB
 }
 
-func (a *UserRepo) getQueryOption(opts ...schema.UserQueryOptions) schema.UserQueryOptions {
+func (a *UserDao) getQueryOption(opts ...schema.UserQueryOptions) schema.UserQueryOptions {
 	var opt schema.UserQueryOptions
 	if len(opts) > 0 {
 		opt = opts[0]
@@ -25,7 +24,7 @@ func (a *UserRepo) getQueryOption(opts ...schema.UserQueryOptions) schema.UserQu
 	return opt
 }
 
-func (a *UserRepo) Query(ctx context.Context, params schema.UserQueryParam, opts ...schema.UserQueryOptions) (*schema.UserQueryResult, error) {
+func (a *UserDao) Query(ctx context.Context, params schema.UserQueryParam, opts ...schema.UserQueryOptions) (*schema.UserQueryResult, error) {
 	opt := a.getQueryOption(opts...)
 
 	db := GetUserDB(ctx, a.DB)
@@ -67,7 +66,7 @@ func (a *UserRepo) Query(ctx context.Context, params schema.UserQueryParam, opts
 	return qr, nil
 }
 
-func (a *UserRepo) Get(ctx context.Context, id uint64, opts ...schema.UserQueryOptions) (*schema.User, error) {
+func (a *UserDao) Get(ctx context.Context, id uint64, opts ...schema.UserQueryOptions) (*schema.User, error) {
 	var item User
 	ok, err := util.FindOne(ctx, GetUserDB(ctx, a.DB).Where("id=?", id), &item)
 	if err != nil {
@@ -79,29 +78,29 @@ func (a *UserRepo) Get(ctx context.Context, id uint64, opts ...schema.UserQueryO
 	return item.ToSchemaUser(), nil
 }
 
-func (a *UserRepo) Create(ctx context.Context, item schema.User) error {
+func (a *UserDao) Create(ctx context.Context, item schema.User) error {
 	sitem := SchemaUser(item)
 	result := GetUserDB(ctx, a.DB).Create(sitem.ToUser())
 	return errors.WithStack(result.Error)
 }
 
-func (a *UserRepo) Update(ctx context.Context, id uint64, item schema.User) error {
+func (a *UserDao) Update(ctx context.Context, id uint64, item schema.User) error {
 	eitem := SchemaUser(item).ToUser()
 	result := GetUserDB(ctx, a.DB).Where("id=?", id).Updates(eitem)
 	return errors.WithStack(result.Error)
 }
 
-func (a *UserRepo) Delete(ctx context.Context, id uint64) error {
+func (a *UserDao) Delete(ctx context.Context, id uint64) error {
 	result := GetUserDB(ctx, a.DB).Where("id=?", id).Delete(User{})
 	return errors.WithStack(result.Error)
 }
 
-func (a *UserRepo) UpdateStatus(ctx context.Context, id uint64, status int) error {
+func (a *UserDao) UpdateStatus(ctx context.Context, id uint64, status int) error {
 	result := GetUserDB(ctx, a.DB).Where("id=?", id).Update("status", status)
 	return errors.WithStack(result.Error)
 }
 
-func (a *UserRepo) UpdatePassword(ctx context.Context, id uint64, password string) error {
+func (a *UserDao) UpdatePassword(ctx context.Context, id uint64, password string) error {
 	result := GetUserDB(ctx, a.DB).Where("id=?", id).Update("password", password)
 	return errors.WithStack(result.Error)
 }

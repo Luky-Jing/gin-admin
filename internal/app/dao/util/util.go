@@ -9,8 +9,8 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 
-	"github.com/LyricTian/gin-admin/v8/internal/app/contextx"
-	"github.com/LyricTian/gin-admin/v8/internal/app/schema"
+	"gin-admin/internal/app/contextx"
+	"gin-admin/internal/app/schema"
 )
 
 // Define base model

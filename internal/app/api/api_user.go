@@ -6,12 +6,12 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/wire"
 
-	"github.com/LyricTian/gin-admin/v8/internal/app/contextx"
-	"github.com/LyricTian/gin-admin/v8/internal/app/ginx"
-	"github.com/LyricTian/gin-admin/v8/internal/app/schema"
-	"github.com/LyricTian/gin-admin/v8/internal/app/service"
-	"github.com/LyricTian/gin-admin/v8/pkg/errors"
-	"github.com/LyricTian/gin-admin/v8/pkg/util/conv"
+	"gin-admin/internal/app/contextx"
+	"gin-admin/internal/app/ginx"
+	"gin-admin/internal/app/schema"
+	"gin-admin/internal/app/service"
+	"gin-admin/pkg/errors"
+	"gin-admin/pkg/util/conv"
 )
 
 var UserSet = wire.NewSet(wire.Struct(new(UserAPI), "*"))

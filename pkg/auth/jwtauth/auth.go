@@ -6,7 +6,7 @@ import (
 
 	jwt "github.com/dgrijalva/jwt-go"
 
-	"github.com/LyricTian/gin-admin/v8/pkg/auth"
+	"gin-admin/pkg/auth"
 )
 
 const defaultKey = "gin-admin"

@@ -2,22 +2,21 @@ package role
 
 import (
 	"context"
-
 	"github.com/google/wire"
 	"gorm.io/gorm"
 
-	"github.com/LyricTian/gin-admin/v8/internal/app/dao/util"
-	"github.com/LyricTian/gin-admin/v8/internal/app/schema"
-	"github.com/LyricTian/gin-admin/v8/pkg/errors"
+	"gin-admin/internal/app/dao/util"
+	"gin-admin/internal/app/schema"
+	"gin-admin/pkg/errors"
 )
 
-var RoleMenuSet = wire.NewSet(wire.Struct(new(RoleMenuRepo), "*"))
+var RoleMenuSet = wire.NewSet(wire.Struct(new(RoleMenuDao), "*"))
 
-type RoleMenuRepo struct {
+type RoleMenuDao struct {
 	DB *gorm.DB
 }
 
-func (a *RoleMenuRepo) getQueryOption(opts ...schema.RoleMenuQueryOptions) schema.RoleMenuQueryOptions {
+func (a *RoleMenuDao) getQueryOption(opts ...schema.RoleMenuQueryOptions) schema.RoleMenuQueryOptions {
 	var opt schema.RoleMenuQueryOptions
 	if len(opts) > 0 {
 		opt = opts[0]
@@ -25,7 +24,7 @@ func (a *RoleMenuRepo) getQueryOption(opts ...schema.RoleMenuQueryOptions) schem
 	return opt
 }
 
-func (a *RoleMenuRepo) Query(ctx context.Context, params schema.RoleMenuQueryParam, opts ...schema.RoleMenuQueryOptions) (*schema.RoleMenuQueryResult, error) {
+func (a *RoleMenuDao) Query(ctx context.Context, params schema.RoleMenuQueryParam, opts ...schema.RoleMenuQueryOptions) (*schema.RoleMenuQueryResult, error) {
 	opt := a.getQueryOption(opts...)
 
 	db := GetRoleMenuDB(ctx, a.DB)
@@ -57,7 +56,7 @@ func (a *RoleMenuRepo) Query(ctx context.Context, params schema.RoleMenuQueryPar
 	return qr, nil
 }
 
-func (a *RoleMenuRepo) Get(ctx context.Context, id uint64, opts ...schema.RoleMenuQueryOptions) (*schema.RoleMenu, error) {
+func (a *RoleMenuDao) Get(ctx context.Context, id uint64, opts ...schema.RoleMenuQueryOptions) (*schema.RoleMenu, error) {
 	db := GetRoleMenuDB(ctx, a.DB).Where("id=?", id)
 	var item RoleMenu
 	ok, err := util.FindOne(ctx, db, &item)
@@ -70,24 +69,24 @@ func (a *RoleMenuRepo) Get(ctx context.Context, id uint64, opts ...schema.RoleMe
 	return item.ToSchemaRoleMenu(), nil
 }
 
-func (a *RoleMenuRepo) Create(ctx context.Context, item schema.RoleMenu) error {
+func (a *RoleMenuDao) Create(ctx context.Context, item schema.RoleMenu) error {
 	eitem := SchemaRoleMenu(item).ToRoleMenu()
 	result := GetRoleMenuDB(ctx, a.DB).Create(eitem)
 	return errors.WithStack(result.Error)
 }
 
-func (a *RoleMenuRepo) Update(ctx context.Context, id uint64, item schema.RoleMenu) error {
+func (a *RoleMenuDao) Update(ctx context.Context, id uint64, item schema.RoleMenu) error {
 	eitem := SchemaRoleMenu(item).ToRoleMenu()
 	result := GetRoleMenuDB(ctx, a.DB).Where("id=?", id).Updates(eitem)
 	return errors.WithStack(result.Error)
 }
 
-func (a *RoleMenuRepo) Delete(ctx context.Context, id uint64) error {
+func (a *RoleMenuDao) Delete(ctx context.Context, id uint64) error {
 	result := GetRoleMenuDB(ctx, a.DB).Where("id=?", id).Delete(RoleMenu{})
 	return errors.WithStack(result.Error)
 }
 
-func (a *RoleMenuRepo) DeleteByRoleID(ctx context.Context, roleID uint64) error {
+func (a *RoleMenuDao) DeleteByRoleID(ctx context.Context, roleID uint64) error {
 	result := GetRoleMenuDB(ctx, a.DB).Where("role_id=?", roleID).Delete(RoleMenu{})
 	return errors.WithStack(result.Error)
 }

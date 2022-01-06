@@ -8,23 +8,23 @@ import (
 	"github.com/LyricTian/captcha"
 	"github.com/google/wire"
 
-	"github.com/LyricTian/gin-admin/v8/internal/app/dao"
-	"github.com/LyricTian/gin-admin/v8/internal/app/schema"
-	"github.com/LyricTian/gin-admin/v8/pkg/auth"
-	"github.com/LyricTian/gin-admin/v8/pkg/errors"
-	"github.com/LyricTian/gin-admin/v8/pkg/util/hash"
+	"gin-admin/internal/app/dao"
+	"gin-admin/internal/app/schema"
+	"gin-admin/pkg/auth"
+	"gin-admin/pkg/errors"
+	"gin-admin/pkg/util/hash"
 )
 
 var LoginSet = wire.NewSet(wire.Struct(new(LoginSrv), "*"))
 
 type LoginSrv struct {
-	Auth           auth.Auther
-	UserRepo       *dao.UserRepo
-	UserRoleRepo   *dao.UserRoleRepo
-	RoleRepo       *dao.RoleRepo
-	RoleMenuRepo   *dao.RoleMenuRepo
-	MenuRepo       *dao.MenuRepo
-	MenuActionRepo *dao.MenuActionRepo
+	Auth          auth.Auther
+	UserDao       *dao.UserDao
+	UserRoleDao   *dao.UserRoleDao
+	RoleDao       *dao.RoleDao
+	RoleMenuDao   *dao.RoleMenuDao
+	MenuDao       *dao.MenuDao
+	MenuActionDao *dao.MenuActionDao
 }
 
 func (a *LoginSrv) GetCaptcha(ctx context.Context, length int) (*schema.LoginCaptcha, error) {
@@ -57,7 +57,7 @@ func (a *LoginSrv) Verify(ctx context.Context, userName, password string) (*sche
 		return root, nil
 	}
 
-	result, err := a.UserRepo.Query(ctx, schema.UserQueryParam{
+	result, err := a.UserDao.Query(ctx, schema.UserQueryParam{
 		UserName: userName,
 	})
 	if err != nil {
@@ -99,7 +99,7 @@ func (a *LoginSrv) DestroyToken(ctx context.Context, tokenString string) error {
 }
 
 func (a *LoginSrv) checkAndGetUser(ctx context.Context, userID uint64) (*schema.User, error) {
-	user, err := a.UserRepo.Get(ctx, userID)
+	user, err := a.UserDao.Get(ctx, userID)
 	if err != nil {
 		return nil, err
 	} else if user == nil {
@@ -131,7 +131,7 @@ func (a *LoginSrv) GetLoginInfo(ctx context.Context, userID uint64) (*schema.Use
 		RealName: user.RealName,
 	}
 
-	userRoleResult, err := a.UserRoleRepo.Query(ctx, schema.UserRoleQueryParam{
+	userRoleResult, err := a.UserRoleDao.Query(ctx, schema.UserRoleQueryParam{
 		UserID: userID,
 	})
 	if err != nil {
@@ -139,7 +139,7 @@ func (a *LoginSrv) GetLoginInfo(ctx context.Context, userID uint64) (*schema.Use
 	}
 
 	if roleIDs := userRoleResult.Data.ToRoleIDs(); len(roleIDs) > 0 {
-		roleResult, err := a.RoleRepo.Query(ctx, schema.RoleQueryParam{
+		roleResult, err := a.RoleDao.Query(ctx, schema.RoleQueryParam{
 			IDs:    roleIDs,
 			Status: 1,
 		})
@@ -155,7 +155,7 @@ func (a *LoginSrv) GetLoginInfo(ctx context.Context, userID uint64) (*schema.Use
 func (a *LoginSrv) QueryUserMenuTree(ctx context.Context, userID uint64) (schema.MenuTrees, error) {
 	isRoot := schema.CheckIsRootUser(ctx, userID)
 	if isRoot {
-		result, err := a.MenuRepo.Query(ctx, schema.MenuQueryParam{
+		result, err := a.MenuDao.Query(ctx, schema.MenuQueryParam{
 			Status: 1,
 		}, schema.MenuQueryOptions{
 			OrderFields: schema.NewOrderFields(schema.NewOrderField("sequence", schema.OrderByDESC)),
@@ -164,14 +164,14 @@ func (a *LoginSrv) QueryUserMenuTree(ctx context.Context, userID uint64) (schema
 			return nil, err
 		}
 
-		menuActionResult, err := a.MenuActionRepo.Query(ctx, schema.MenuActionQueryParam{})
+		menuActionResult, err := a.MenuActionDao.Query(ctx, schema.MenuActionQueryParam{})
 		if err != nil {
 			return nil, err
 		}
 		return result.Data.FillMenuAction(menuActionResult.Data.ToMenuIDMap()).ToTree(), nil
 	}
 
-	userRoleResult, err := a.UserRoleRepo.Query(ctx, schema.UserRoleQueryParam{
+	userRoleResult, err := a.UserRoleDao.Query(ctx, schema.UserRoleQueryParam{
 		UserID: userID,
 	})
 	if err != nil {
@@ -180,7 +180,7 @@ func (a *LoginSrv) QueryUserMenuTree(ctx context.Context, userID uint64) (schema
 		return nil, errors.ErrNoPerm
 	}
 
-	roleMenuResult, err := a.RoleMenuRepo.Query(ctx, schema.RoleMenuQueryParam{
+	roleMenuResult, err := a.RoleMenuDao.Query(ctx, schema.RoleMenuQueryParam{
 		RoleIDs: userRoleResult.Data.ToRoleIDs(),
 	})
 	if err != nil {
@@ -189,7 +189,7 @@ func (a *LoginSrv) QueryUserMenuTree(ctx context.Context, userID uint64) (schema
 		return nil, errors.ErrNoPerm
 	}
 
-	menuResult, err := a.MenuRepo.Query(ctx, schema.MenuQueryParam{
+	menuResult, err := a.MenuDao.Query(ctx, schema.MenuQueryParam{
 		IDs:    roleMenuResult.Data.ToMenuIDs(),
 		Status: 1,
 	})
@@ -209,7 +209,7 @@ func (a *LoginSrv) QueryUserMenuTree(ctx context.Context, userID uint64) (schema
 	}
 
 	if len(qIDs) > 0 {
-		pmenuResult, err := a.MenuRepo.Query(ctx, schema.MenuQueryParam{
+		pmenuResult, err := a.MenuDao.Query(ctx, schema.MenuQueryParam{
 			IDs: qIDs,
 		})
 		if err != nil {
@@ -219,7 +219,7 @@ func (a *LoginSrv) QueryUserMenuTree(ctx context.Context, userID uint64) (schema
 	}
 
 	sort.Sort(menuResult.Data)
-	menuActionResult, err := a.MenuActionRepo.Query(ctx, schema.MenuActionQueryParam{
+	menuActionResult, err := a.MenuActionDao.Query(ctx, schema.MenuActionQueryParam{
 		IDs: roleMenuResult.Data.ToActionIDs(),
 	})
 	if err != nil {
@@ -241,5 +241,5 @@ func (a *LoginSrv) UpdatePassword(ctx context.Context, userID uint64, params sch
 	}
 
 	params.NewPassword = hash.SHA1String(params.NewPassword)
-	return a.UserRepo.UpdatePassword(ctx, userID, params.NewPassword)
+	return a.UserDao.UpdatePassword(ctx, userID, params.NewPassword)
 }

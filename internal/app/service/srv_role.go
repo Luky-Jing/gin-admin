@@ -7,29 +7,29 @@ import (
 	"github.com/casbin/casbin/v2"
 	"github.com/google/wire"
 
-	"github.com/LyricTian/gin-admin/v8/internal/app/dao"
-	"github.com/LyricTian/gin-admin/v8/internal/app/schema"
-	"github.com/LyricTian/gin-admin/v8/pkg/errors"
-	"github.com/LyricTian/gin-admin/v8/pkg/util/snowflake"
+	"gin-admin/internal/app/dao"
+	"gin-admin/internal/app/schema"
+	"gin-admin/pkg/errors"
+	"gin-admin/pkg/util/snowflake"
 )
 
 var RoleSet = wire.NewSet(wire.Struct(new(RoleSrv), "*"))
 
 type RoleSrv struct {
-	Enforcer               *casbin.SyncedEnforcer
-	TransRepo              *dao.TransRepo
-	RoleRepo               *dao.RoleRepo
-	RoleMenuRepo           *dao.RoleMenuRepo
-	UserRepo               *dao.UserRepo
-	MenuActionResourceRepo *dao.MenuActionResourceRepo
+	Enforcer              *casbin.SyncedEnforcer
+	TransDao              *dao.TransDao
+	RoleDao               *dao.RoleDao
+	RoleMenuDao           *dao.RoleMenuDao
+	UserDao               *dao.UserDao
+	MenuActionResourceDao *dao.MenuActionResourceDao
 }
 
 func (a *RoleSrv) Query(ctx context.Context, params schema.RoleQueryParam, opts ...schema.RoleQueryOptions) (*schema.RoleQueryResult, error) {
-	return a.RoleRepo.Query(ctx, params, opts...)
+	return a.RoleDao.Query(ctx, params, opts...)
 }
 
 func (a *RoleSrv) Get(ctx context.Context, id uint64, opts ...schema.RoleQueryOptions) (*schema.Role, error) {
-	item, err := a.RoleRepo.Get(ctx, id, opts...)
+	item, err := a.RoleDao.Get(ctx, id, opts...)
 	if err != nil {
 		return nil, err
 	} else if item == nil {
@@ -46,7 +46,7 @@ func (a *RoleSrv) Get(ctx context.Context, id uint64, opts ...schema.RoleQueryOp
 }
 
 func (a *RoleSrv) QueryRoleMenus(ctx context.Context, roleID uint64) (schema.RoleMenus, error) {
-	result, err := a.RoleMenuRepo.Query(ctx, schema.RoleMenuQueryParam{
+	result, err := a.RoleMenuDao.Query(ctx, schema.RoleMenuQueryParam{
 		RoleID: roleID,
 	})
 	if err != nil {
@@ -62,22 +62,22 @@ func (a *RoleSrv) Create(ctx context.Context, item schema.Role) (*schema.IDResul
 	}
 
 	item.ID = snowflake.MustID()
-	err = a.TransRepo.Exec(ctx, func(ctx context.Context) error {
+	err = a.TransDao.Exec(ctx, func(ctx context.Context) error {
 		for _, rmItem := range item.RoleMenus {
 			rmItem.ID = snowflake.MustID()
 			rmItem.RoleID = item.ID
-			err := a.RoleMenuRepo.Create(ctx, *rmItem)
+			err := a.RoleMenuDao.Create(ctx, *rmItem)
 			if err != nil {
 				return err
 			}
 		}
-		return a.RoleRepo.Create(ctx, item)
+		return a.RoleDao.Create(ctx, item)
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	resources, err := a.MenuActionResourceRepo.Query(ctx, schema.MenuActionResourceQueryParam{
+	resources, err := a.MenuActionResourceDao.Query(ctx, schema.MenuActionResourceQueryParam{
 		MenuIDs: item.RoleMenus.ToMenuIDs(),
 	})
 	if err != nil {
@@ -91,7 +91,7 @@ func (a *RoleSrv) Create(ctx context.Context, item schema.Role) (*schema.IDResul
 }
 
 func (a *RoleSrv) checkName(ctx context.Context, item schema.Role) error {
-	result, err := a.RoleRepo.Query(ctx, schema.RoleQueryParam{
+	result, err := a.RoleDao.Query(ctx, schema.RoleQueryParam{
 		PaginationParam: schema.PaginationParam{OnlyCount: true},
 		Name:            item.Name,
 	})
@@ -119,38 +119,38 @@ func (a *RoleSrv) Update(ctx context.Context, id uint64, item schema.Role) error
 	item.ID = oldItem.ID
 	item.Creator = oldItem.Creator
 	item.CreatedAt = oldItem.CreatedAt
-	err = a.TransRepo.Exec(ctx, func(ctx context.Context) error {
+	err = a.TransDao.Exec(ctx, func(ctx context.Context) error {
 		addRoleMenus, delRoleMenus := a.compareRoleMenus(ctx, oldItem.RoleMenus, item.RoleMenus)
 		for _, rmitem := range addRoleMenus {
 			rmitem.ID = snowflake.MustID()
 			rmitem.RoleID = id
-			err := a.RoleMenuRepo.Create(ctx, *rmitem)
+			err := a.RoleMenuDao.Create(ctx, *rmitem)
 			if err != nil {
 				return err
 			}
 		}
 
 		for _, rmitem := range delRoleMenus {
-			err := a.RoleMenuRepo.Delete(ctx, rmitem.ID)
+			err := a.RoleMenuDao.Delete(ctx, rmitem.ID)
 			if err != nil {
 				return err
 			}
 		}
 
-		return a.RoleRepo.Update(ctx, id, item)
+		return a.RoleDao.Update(ctx, id, item)
 	})
 	if err != nil {
 		return err
 	}
 
-	roleMenus, err := a.RoleMenuRepo.Query(ctx, schema.RoleMenuQueryParam{
+	roleMenus, err := a.RoleMenuDao.Query(ctx, schema.RoleMenuQueryParam{
 		RoleID: id,
 	})
 	if err != nil {
 		return err
 	}
 
-	resources, err := a.MenuActionResourceRepo.Query(ctx, schema.MenuActionResourceQueryParam{
+	resources, err := a.MenuActionResourceDao.Query(ctx, schema.MenuActionResourceQueryParam{
 		MenuIDs: roleMenus.Data.ToMenuIDs(),
 	})
 	if err != nil {
@@ -184,14 +184,14 @@ func (a *RoleSrv) compareRoleMenus(ctx context.Context, oldRoleMenus, newRoleMen
 }
 
 func (a *RoleSrv) Delete(ctx context.Context, id uint64) error {
-	oldItem, err := a.RoleRepo.Get(ctx, id)
+	oldItem, err := a.RoleDao.Get(ctx, id)
 	if err != nil {
 		return err
 	} else if oldItem == nil {
 		return errors.ErrNotFound
 	}
 
-	userResult, err := a.UserRepo.Query(ctx, schema.UserQueryParam{
+	userResult, err := a.UserDao.Query(ctx, schema.UserQueryParam{
 		PaginationParam: schema.PaginationParam{OnlyCount: true},
 		RoleIDs:         []uint64{id},
 	})
@@ -201,13 +201,13 @@ func (a *RoleSrv) Delete(ctx context.Context, id uint64) error {
 		return errors.New400Response("不允许删除已经存在用户的角色")
 	}
 
-	err = a.TransRepo.Exec(ctx, func(ctx context.Context) error {
-		err := a.RoleMenuRepo.DeleteByRoleID(ctx, id)
+	err = a.TransDao.Exec(ctx, func(ctx context.Context) error {
+		err := a.RoleMenuDao.DeleteByRoleID(ctx, id)
 		if err != nil {
 			return err
 		}
 
-		return a.RoleRepo.Delete(ctx, id)
+		return a.RoleDao.Delete(ctx, id)
 	})
 	if err != nil {
 		return err
@@ -219,7 +219,7 @@ func (a *RoleSrv) Delete(ctx context.Context, id uint64) error {
 }
 
 func (a *RoleSrv) UpdateStatus(ctx context.Context, id uint64, status int) error {
-	oldItem, err := a.RoleRepo.Get(ctx, id)
+	oldItem, err := a.RoleDao.Get(ctx, id)
 	if err != nil {
 		return err
 	} else if oldItem == nil {
@@ -228,20 +228,20 @@ func (a *RoleSrv) UpdateStatus(ctx context.Context, id uint64, status int) error
 		return nil
 	}
 
-	err = a.RoleRepo.UpdateStatus(ctx, id, status)
+	err = a.RoleDao.UpdateStatus(ctx, id, status)
 	if err != nil {
 		return err
 	}
 
 	if status == 1 {
-		roleMenus, err := a.RoleMenuRepo.Query(ctx, schema.RoleMenuQueryParam{
+		roleMenus, err := a.RoleMenuDao.Query(ctx, schema.RoleMenuQueryParam{
 			RoleID: id,
 		})
 		if err != nil {
 			return err
 		}
 
-		resources, err := a.MenuActionResourceRepo.Query(ctx, schema.MenuActionResourceQueryParam{
+		resources, err := a.MenuActionResourceDao.Query(ctx, schema.MenuActionResourceQueryParam{
 			MenuIDs: roleMenus.Data.ToMenuIDs(),
 		})
 		if err != nil {

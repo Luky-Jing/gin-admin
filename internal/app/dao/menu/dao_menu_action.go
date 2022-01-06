@@ -2,22 +2,21 @@ package menu
 
 import (
 	"context"
-
 	"github.com/google/wire"
 	"gorm.io/gorm"
 
-	"github.com/LyricTian/gin-admin/v8/internal/app/dao/util"
-	"github.com/LyricTian/gin-admin/v8/internal/app/schema"
-	"github.com/LyricTian/gin-admin/v8/pkg/errors"
+	"gin-admin/internal/app/dao/util"
+	"gin-admin/internal/app/schema"
+	"gin-admin/pkg/errors"
 )
 
-var MenuActionSet = wire.NewSet(wire.Struct(new(MenuActionRepo), "*"))
+var MenuActionSet = wire.NewSet(wire.Struct(new(MenuActionDao), "*"))
 
-type MenuActionRepo struct {
+type MenuActionDao struct {
 	DB *gorm.DB
 }
 
-func (a *MenuActionRepo) getQueryOption(opts ...schema.MenuActionQueryOptions) schema.MenuActionQueryOptions {
+func (a *MenuActionDao) getQueryOption(opts ...schema.MenuActionQueryOptions) schema.MenuActionQueryOptions {
 	var opt schema.MenuActionQueryOptions
 	if len(opts) > 0 {
 		opt = opts[0]
@@ -25,7 +24,7 @@ func (a *MenuActionRepo) getQueryOption(opts ...schema.MenuActionQueryOptions) s
 	return opt
 }
 
-func (a *MenuActionRepo) Query(ctx context.Context, params schema.MenuActionQueryParam, opts ...schema.MenuActionQueryOptions) (*schema.MenuActionQueryResult, error) {
+func (a *MenuActionDao) Query(ctx context.Context, params schema.MenuActionQueryParam, opts ...schema.MenuActionQueryOptions) (*schema.MenuActionQueryResult, error) {
 	opt := a.getQueryOption(opts...)
 
 	db := GetMenuActionDB(ctx, a.DB)
@@ -53,7 +52,7 @@ func (a *MenuActionRepo) Query(ctx context.Context, params schema.MenuActionQuer
 	return qr, nil
 }
 
-func (a *MenuActionRepo) Get(ctx context.Context, id uint64, opts ...schema.MenuActionQueryOptions) (*schema.MenuAction, error) {
+func (a *MenuActionDao) Get(ctx context.Context, id uint64, opts ...schema.MenuActionQueryOptions) (*schema.MenuAction, error) {
 	db := GetMenuActionDB(ctx, a.DB).Where("id=?", id)
 	var item MenuAction
 	ok, err := util.FindOne(ctx, db, &item)
@@ -66,24 +65,24 @@ func (a *MenuActionRepo) Get(ctx context.Context, id uint64, opts ...schema.Menu
 	return item.ToSchemaMenuAction(), nil
 }
 
-func (a *MenuActionRepo) Create(ctx context.Context, item schema.MenuAction) error {
+func (a *MenuActionDao) Create(ctx context.Context, item schema.MenuAction) error {
 	eitem := SchemaMenuAction(item).ToMenuAction()
 	result := GetMenuActionDB(ctx, a.DB).Create(eitem)
 	return errors.WithStack(result.Error)
 }
 
-func (a *MenuActionRepo) Update(ctx context.Context, id uint64, item schema.MenuAction) error {
+func (a *MenuActionDao) Update(ctx context.Context, id uint64, item schema.MenuAction) error {
 	eitem := SchemaMenuAction(item).ToMenuAction()
 	result := GetMenuActionDB(ctx, a.DB).Where("id=?", id).Updates(eitem)
 	return errors.WithStack(result.Error)
 }
 
-func (a *MenuActionRepo) Delete(ctx context.Context, id uint64) error {
+func (a *MenuActionDao) Delete(ctx context.Context, id uint64) error {
 	result := GetMenuActionDB(ctx, a.DB).Where("id=?", id).Delete(MenuAction{})
 	return errors.WithStack(result.Error)
 }
 
-func (a *MenuActionRepo) DeleteByMenuID(ctx context.Context, menuID uint64) error {
+func (a *MenuActionDao) DeleteByMenuID(ctx context.Context, menuID uint64) error {
 	result := GetMenuActionDB(ctx, a.DB).Where("menu_id=?", menuID).Delete(MenuAction{})
 	return errors.WithStack(result.Error)
 }

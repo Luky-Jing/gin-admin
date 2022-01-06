@@ -7,25 +7,25 @@ import (
 
 	"github.com/google/wire"
 
-	"github.com/LyricTian/gin-admin/v8/internal/app/contextx"
-	"github.com/LyricTian/gin-admin/v8/internal/app/dao"
-	"github.com/LyricTian/gin-admin/v8/internal/app/schema"
-	"github.com/LyricTian/gin-admin/v8/pkg/errors"
-	"github.com/LyricTian/gin-admin/v8/pkg/util/snowflake"
-	"github.com/LyricTian/gin-admin/v8/pkg/util/yaml"
+	"gin-admin/internal/app/contextx"
+	"gin-admin/internal/app/dao"
+	"gin-admin/internal/app/schema"
+	"gin-admin/pkg/errors"
+	"gin-admin/pkg/util/snowflake"
+	"gin-admin/pkg/util/yaml"
 )
 
 var MenuSet = wire.NewSet(wire.Struct(new(MenuSrv), "*"))
 
 type MenuSrv struct {
-	TransRepo              *dao.TransRepo
-	MenuRepo               *dao.MenuRepo
-	MenuActionRepo         *dao.MenuActionRepo
-	MenuActionResourceRepo *dao.MenuActionResourceRepo
+	TransDao              *dao.TransDao
+	MenuDao               *dao.MenuDao
+	MenuActionDao         *dao.MenuActionDao
+	MenuActionResourceDao *dao.MenuActionResourceDao
 }
 
 func (a *MenuSrv) InitData(ctx context.Context, dataFile string) error {
-	result, err := a.MenuRepo.Query(ctx, schema.MenuQueryParam{
+	result, err := a.MenuDao.Query(ctx, schema.MenuQueryParam{
 		PaginationParam: schema.PaginationParam{OnlyCount: true},
 	})
 	if err != nil {
@@ -57,7 +57,7 @@ func (a *MenuSrv) readData(name string) (schema.MenuTrees, error) {
 }
 
 func (a *MenuSrv) createMenus(ctx context.Context, parentID uint64, list schema.MenuTrees) error {
-	return a.TransRepo.Exec(ctx, func(ctx context.Context) error {
+	return a.TransDao.Exec(ctx, func(ctx context.Context) error {
 		for _, item := range list {
 			sitem := schema.Menu{
 				Name:     item.Name,
@@ -91,12 +91,12 @@ func (a *MenuSrv) createMenus(ctx context.Context, parentID uint64, list schema.
 }
 
 func (a *MenuSrv) Query(ctx context.Context, params schema.MenuQueryParam, opts ...schema.MenuQueryOptions) (*schema.MenuQueryResult, error) {
-	menuActionResult, err := a.MenuActionRepo.Query(ctx, schema.MenuActionQueryParam{})
+	menuActionResult, err := a.MenuActionDao.Query(ctx, schema.MenuActionQueryParam{})
 	if err != nil {
 		return nil, err
 	}
 
-	result, err := a.MenuRepo.Query(ctx, params, opts...)
+	result, err := a.MenuDao.Query(ctx, params, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -105,7 +105,7 @@ func (a *MenuSrv) Query(ctx context.Context, params schema.MenuQueryParam, opts 
 }
 
 func (a *MenuSrv) Get(ctx context.Context, id uint64, opts ...schema.MenuQueryOptions) (*schema.Menu, error) {
-	item, err := a.MenuRepo.Get(ctx, id, opts...)
+	item, err := a.MenuDao.Get(ctx, id, opts...)
 	if err != nil {
 		return nil, err
 	} else if item == nil {
@@ -122,7 +122,7 @@ func (a *MenuSrv) Get(ctx context.Context, id uint64, opts ...schema.MenuQueryOp
 }
 
 func (a *MenuSrv) QueryActions(ctx context.Context, id uint64) (schema.MenuActions, error) {
-	result, err := a.MenuActionRepo.Query(ctx, schema.MenuActionQueryParam{
+	result, err := a.MenuActionDao.Query(ctx, schema.MenuActionQueryParam{
 		MenuID: id,
 	})
 	if err != nil {
@@ -131,7 +131,7 @@ func (a *MenuSrv) QueryActions(ctx context.Context, id uint64) (schema.MenuActio
 		return nil, nil
 	}
 
-	resourceResult, err := a.MenuActionResourceRepo.Query(ctx, schema.MenuActionResourceQueryParam{
+	resourceResult, err := a.MenuActionResourceDao.Query(ctx, schema.MenuActionResourceQueryParam{
 		MenuID: id,
 	})
 	if err != nil {
@@ -144,7 +144,7 @@ func (a *MenuSrv) QueryActions(ctx context.Context, id uint64) (schema.MenuActio
 }
 
 func (a *MenuSrv) checkName(ctx context.Context, item schema.Menu) error {
-	result, err := a.MenuRepo.Query(ctx, schema.MenuQueryParam{
+	result, err := a.MenuDao.Query(ctx, schema.MenuQueryParam{
 		PaginationParam: schema.PaginationParam{
 			OnlyCount: true,
 		},
@@ -171,13 +171,13 @@ func (a *MenuSrv) Create(ctx context.Context, item schema.Menu) (*schema.IDResul
 	item.ParentPath = parentPath
 	item.ID = snowflake.MustID()
 
-	err = a.TransRepo.Exec(ctx, func(ctx context.Context) error {
+	err = a.TransDao.Exec(ctx, func(ctx context.Context) error {
 		err := a.createActions(ctx, item.ID, item.Actions)
 		if err != nil {
 			return err
 		}
 
-		return a.MenuRepo.Create(ctx, item)
+		return a.MenuDao.Create(ctx, item)
 	})
 	if err != nil {
 		return nil, err
@@ -190,7 +190,7 @@ func (a *MenuSrv) createActions(ctx context.Context, menuID uint64, items schema
 	for _, item := range items {
 		item.ID = snowflake.MustID()
 		item.MenuID = menuID
-		err := a.MenuActionRepo.Create(ctx, *item)
+		err := a.MenuActionDao.Create(ctx, *item)
 		if err != nil {
 			return err
 		}
@@ -198,7 +198,7 @@ func (a *MenuSrv) createActions(ctx context.Context, menuID uint64, items schema
 		for _, ritem := range item.Resources {
 			ritem.ID = snowflake.MustID()
 			ritem.ActionID = item.ID
-			err := a.MenuActionResourceRepo.Create(ctx, *ritem)
+			err := a.MenuActionResourceDao.Create(ctx, *ritem)
 			if err != nil {
 				return err
 			}
@@ -213,7 +213,7 @@ func (a *MenuSrv) getParentPath(ctx context.Context, parentID uint64) (string, e
 		return "", nil
 	}
 
-	pitem, err := a.MenuRepo.Get(ctx, parentID)
+	pitem, err := a.MenuDao.Get(ctx, parentID)
 	if err != nil {
 		return "", err
 	} else if pitem == nil {
@@ -261,7 +261,7 @@ func (a *MenuSrv) Update(ctx context.Context, id uint64, item schema.Menu) error
 		item.ParentPath = oldItem.ParentPath
 	}
 
-	return a.TransRepo.Exec(ctx, func(ctx context.Context) error {
+	return a.TransDao.Exec(ctx, func(ctx context.Context) error {
 		err := a.updateActions(ctx, id, oldItem.Actions, item.Actions)
 		if err != nil {
 			return err
@@ -272,7 +272,7 @@ func (a *MenuSrv) Update(ctx context.Context, id uint64, item schema.Menu) error
 			return err
 		}
 
-		return a.MenuRepo.Update(ctx, id, item)
+		return a.MenuDao.Update(ctx, id, item)
 	})
 }
 
@@ -285,12 +285,12 @@ func (a *MenuSrv) updateActions(ctx context.Context, menuID uint64, oldItems, ne
 	}
 
 	for _, item := range delActions {
-		err := a.MenuActionRepo.Delete(ctx, item.ID)
+		err := a.MenuActionDao.Delete(ctx, item.ID)
 		if err != nil {
 			return err
 		}
 
-		err = a.MenuActionResourceRepo.DeleteByActionID(ctx, item.ID)
+		err = a.MenuActionResourceDao.DeleteByActionID(ctx, item.ID)
 		if err != nil {
 			return err
 		}
@@ -301,7 +301,7 @@ func (a *MenuSrv) updateActions(ctx context.Context, menuID uint64, oldItems, ne
 		oitem := mOldItems[item.Code]
 		if item.Name != oitem.Name {
 			oitem.Name = item.Name
-			err := a.MenuActionRepo.Update(ctx, item.ID, *oitem)
+			err := a.MenuActionDao.Update(ctx, item.ID, *oitem)
 			if err != nil {
 				return err
 			}
@@ -311,14 +311,14 @@ func (a *MenuSrv) updateActions(ctx context.Context, menuID uint64, oldItems, ne
 		for _, aritem := range addResources {
 			aritem.ID = snowflake.MustID()
 			aritem.ActionID = oitem.ID
-			err := a.MenuActionResourceRepo.Create(ctx, *aritem)
+			err := a.MenuActionResourceDao.Create(ctx, *aritem)
 			if err != nil {
 				return err
 			}
 		}
 
 		for _, ditem := range delResources {
-			err := a.MenuActionResourceRepo.Delete(ctx, ditem.ID)
+			err := a.MenuActionResourceDao.Delete(ctx, ditem.ID)
 			if err != nil {
 				return err
 			}
@@ -371,7 +371,7 @@ func (a *MenuSrv) updateChildParentPath(ctx context.Context, oldItem, newItem sc
 	}
 
 	opath := a.joinParentPath(oldItem.ParentPath, oldItem.ID)
-	result, err := a.MenuRepo.Query(contextx.NewNoTrans(ctx), schema.MenuQueryParam{
+	result, err := a.MenuDao.Query(contextx.NewNoTrans(ctx), schema.MenuQueryParam{
 		PrefixParentPath: opath,
 	})
 	if err != nil {
@@ -380,7 +380,7 @@ func (a *MenuSrv) updateChildParentPath(ctx context.Context, oldItem, newItem sc
 
 	npath := a.joinParentPath(newItem.ParentPath, newItem.ID)
 	for _, menu := range result.Data {
-		err = a.MenuRepo.UpdateParentPath(ctx, menu.ID, npath+menu.ParentPath[len(opath):])
+		err = a.MenuDao.UpdateParentPath(ctx, menu.ID, npath+menu.ParentPath[len(opath):])
 		if err != nil {
 			return err
 		}
@@ -389,14 +389,14 @@ func (a *MenuSrv) updateChildParentPath(ctx context.Context, oldItem, newItem sc
 }
 
 func (a *MenuSrv) Delete(ctx context.Context, id uint64) error {
-	oldItem, err := a.MenuRepo.Get(ctx, id)
+	oldItem, err := a.MenuDao.Get(ctx, id)
 	if err != nil {
 		return err
 	} else if oldItem == nil {
 		return errors.ErrNotFound
 	}
 
-	result, err := a.MenuRepo.Query(ctx, schema.MenuQueryParam{
+	result, err := a.MenuDao.Query(ctx, schema.MenuQueryParam{
 		PaginationParam: schema.PaginationParam{OnlyCount: true},
 		ParentID:        &id,
 	})
@@ -406,23 +406,23 @@ func (a *MenuSrv) Delete(ctx context.Context, id uint64) error {
 		return errors.New400Response("forbid delete")
 	}
 
-	return a.TransRepo.Exec(ctx, func(ctx context.Context) error {
-		err = a.MenuActionResourceRepo.DeleteByMenuID(ctx, id)
+	return a.TransDao.Exec(ctx, func(ctx context.Context) error {
+		err = a.MenuActionResourceDao.DeleteByMenuID(ctx, id)
 		if err != nil {
 			return err
 		}
 
-		err := a.MenuActionRepo.DeleteByMenuID(ctx, id)
+		err := a.MenuActionDao.DeleteByMenuID(ctx, id)
 		if err != nil {
 			return err
 		}
 
-		return a.MenuRepo.Delete(ctx, id)
+		return a.MenuDao.Delete(ctx, id)
 	})
 }
 
 func (a *MenuSrv) UpdateStatus(ctx context.Context, id uint64, status int) error {
-	oldItem, err := a.MenuRepo.Get(ctx, id)
+	oldItem, err := a.MenuDao.Get(ctx, id)
 	if err != nil {
 		return err
 	} else if oldItem == nil {
@@ -431,5 +431,5 @@ func (a *MenuSrv) UpdateStatus(ctx context.Context, id uint64, status int) error
 		return nil
 	}
 
-	return a.MenuRepo.UpdateStatus(ctx, id, status)
+	return a.MenuDao.UpdateStatus(ctx, id, status)
 }

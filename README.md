@@ -2,10 +2,6 @@
 
 > RBAC scaffolding based on GIN + Gorm 2.0 + CASBIN + WIRE (DI).
 
-English | [中文](README_CN.md)
-
-[![ReportCard][reportcard-image]][reportcard-url] [![GoDoc][godoc-image]][godoc-url] [![License][license-image]][license-url]
-
 ## Features
 
 - Follow the `RESTful API` design specification
@@ -36,8 +32,6 @@ go get -u github.com/swaggo/swag/cmd/swag
 ## Getting Started
 
 ```bash
-git clone https://github.com/LyricTian/gin-admin
-
 cd gin-admin
 
 go run cmd/gin-admin/main.go web -c ./configs/config.toml -m ./configs/model.conf --menu ./configs/menu.yaml
@@ -61,43 +55,6 @@ swag init --parseDependency --generalInfo ./cmd/${APP}/main.go --output ./intern
 wire gen ./internal/app
 
 # Or use Makefile: make wire
-```
-
-## Use the [gin-admin-cli](https://github.com/gin-admin/gin-admin-cli) tool to quickly generate modules
-
-### Create template file: `task.yaml`
-
-```yaml
-name: Task
-comment: TaskManage
-fields:
-  - name: Code
-    type: string
-    required: true
-    binding_options: ""
-    gorm_options: "size:50;index;"
-  - name: Name
-    type: string
-    required: true
-    binding_options: ""
-    gorm_options: "size:50;index;"
-  - name: Memo
-    type: string
-    required: false
-    binding_options: ""
-    gorm_options: "size:1024;"
-```
-
-### Execute `generate` command
-
-```bash
-gin-admin-cli g -d . -p github.com/LyricTian/gin-admin/v8 -f ./task.yaml
-
-make swagger
-
-make wire
-
-make start
 ```
 
 ## Project Layout
@@ -143,21 +100,3 @@ make start
 │       └── yaml
 └── scripts               
 ```
-
-## Contact
-
-<div>
-<img src="http://store.tiannianshou.com/screenshots/gin-admin/wechat.jpeg" width="256"alt="wechat" />
-<img src="http://store.tiannianshou.com/screenshots/gin-admin/qqgroup.jpeg" width="256" alt="qqgroup" />
-</div>
-
-## MIT License
-
-    Copyright (c) 2021 Lyric
-
-[reportcard-url]: https://goreportcard.com/report/github.com/LyricTian/gin-admin
-[reportcard-image]: https://goreportcard.com/badge/github.com/LyricTian/gin-admin
-[godoc-url]: https://pkg.go.dev/github.com/LyricTian/gin-admin/v8
-[godoc-image]: https://godoc.org/github.com/LyricTian/gin-admin?status.svg
-[license-url]: http://opensource.org/licenses/MIT
-[license-image]: https://img.shields.io/npm/l/express.svg

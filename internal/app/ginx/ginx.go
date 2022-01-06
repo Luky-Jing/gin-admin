@@ -9,10 +9,10 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
 
-	"github.com/LyricTian/gin-admin/v8/internal/app/schema"
-	"github.com/LyricTian/gin-admin/v8/pkg/errors"
-	"github.com/LyricTian/gin-admin/v8/pkg/logger"
-	"github.com/LyricTian/gin-admin/v8/pkg/util/json"
+	"gin-admin/internal/app/schema"
+	"gin-admin/pkg/errors"
+	"gin-admin/pkg/logger"
+	"gin-admin/pkg/util/json"
 )
 
 const (

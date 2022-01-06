@@ -7,8 +7,8 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	"github.com/LyricTian/gin-admin/v8/internal/app/config"
-	"github.com/LyricTian/gin-admin/v8/internal/app/ginx"
+	"gin-admin/internal/app/config"
+	"gin-admin/internal/app/ginx"
 	"github.com/gin-gonic/gin"
 )
 

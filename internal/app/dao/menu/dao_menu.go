@@ -2,22 +2,21 @@ package menu
 
 import (
 	"context"
-
 	"github.com/google/wire"
 	"gorm.io/gorm"
 
-	"github.com/LyricTian/gin-admin/v8/internal/app/dao/util"
-	"github.com/LyricTian/gin-admin/v8/internal/app/schema"
-	"github.com/LyricTian/gin-admin/v8/pkg/errors"
+	"gin-admin/internal/app/dao/util"
+	"gin-admin/internal/app/schema"
+	"gin-admin/pkg/errors"
 )
 
-var MenuSet = wire.NewSet(wire.Struct(new(MenuRepo), "*"))
+var MenuSet = wire.NewSet(wire.Struct(new(MenuDao), "*"))
 
-type MenuRepo struct {
+type MenuDao struct {
 	DB *gorm.DB
 }
 
-func (a *MenuRepo) getQueryOption(opts ...schema.MenuQueryOptions) schema.MenuQueryOptions {
+func (a *MenuDao) getQueryOption(opts ...schema.MenuQueryOptions) schema.MenuQueryOptions {
 	var opt schema.MenuQueryOptions
 	if len(opts) > 0 {
 		opt = opts[0]
@@ -25,7 +24,7 @@ func (a *MenuRepo) getQueryOption(opts ...schema.MenuQueryOptions) schema.MenuQu
 	return opt
 }
 
-func (a *MenuRepo) Query(ctx context.Context, params schema.MenuQueryParam, opts ...schema.MenuQueryOptions) (*schema.MenuQueryResult, error) {
+func (a *MenuDao) Query(ctx context.Context, params schema.MenuQueryParam, opts ...schema.MenuQueryOptions) (*schema.MenuQueryResult, error) {
 	opt := a.getQueryOption(opts...)
 
 	db := GetMenuDB(ctx, a.DB)
@@ -74,7 +73,7 @@ func (a *MenuRepo) Query(ctx context.Context, params schema.MenuQueryParam, opts
 	return qr, nil
 }
 
-func (a *MenuRepo) Get(ctx context.Context, id uint64, opts ...schema.MenuQueryOptions) (*schema.Menu, error) {
+func (a *MenuDao) Get(ctx context.Context, id uint64, opts ...schema.MenuQueryOptions) (*schema.Menu, error) {
 	var item Menu
 	ok, err := util.FindOne(ctx, GetMenuDB(ctx, a.DB).Where("id=?", id), &item)
 	if err != nil {
@@ -86,29 +85,29 @@ func (a *MenuRepo) Get(ctx context.Context, id uint64, opts ...schema.MenuQueryO
 	return item.ToSchemaMenu(), nil
 }
 
-func (a *MenuRepo) Create(ctx context.Context, item schema.Menu) error {
+func (a *MenuDao) Create(ctx context.Context, item schema.Menu) error {
 	eitem := SchemaMenu(item).ToMenu()
 	result := GetMenuDB(ctx, a.DB).Create(eitem)
 	return errors.WithStack(result.Error)
 }
 
-func (a *MenuRepo) Update(ctx context.Context, id uint64, item schema.Menu) error {
+func (a *MenuDao) Update(ctx context.Context, id uint64, item schema.Menu) error {
 	eitem := SchemaMenu(item).ToMenu()
 	result := GetMenuDB(ctx, a.DB).Where("id=?", id).Updates(eitem)
 	return errors.WithStack(result.Error)
 }
 
-func (a *MenuRepo) UpdateParentPath(ctx context.Context, id uint64, parentPath string) error {
+func (a *MenuDao) UpdateParentPath(ctx context.Context, id uint64, parentPath string) error {
 	result := GetMenuDB(ctx, a.DB).Where("id=?", id).Update("parent_path", parentPath)
 	return errors.WithStack(result.Error)
 }
 
-func (a *MenuRepo) Delete(ctx context.Context, id uint64) error {
+func (a *MenuDao) Delete(ctx context.Context, id uint64) error {
 	result := GetMenuDB(ctx, a.DB).Where("id=?", id).Delete(Menu{})
 	return errors.WithStack(result.Error)
 }
 
-func (a *MenuRepo) UpdateStatus(ctx context.Context, id uint64, status int) error {
+func (a *MenuDao) UpdateStatus(ctx context.Context, id uint64, status int) error {
 	result := GetMenuDB(ctx, a.DB).Where("id=?", id).Update("status", status)
 	return errors.WithStack(result.Error)
 }

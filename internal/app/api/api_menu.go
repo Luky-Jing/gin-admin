@@ -4,10 +4,10 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/wire"
 
-	"github.com/LyricTian/gin-admin/v8/internal/app/contextx"
-	"github.com/LyricTian/gin-admin/v8/internal/app/ginx"
-	"github.com/LyricTian/gin-admin/v8/internal/app/schema"
-	"github.com/LyricTian/gin-admin/v8/internal/app/service"
+	"gin-admin/internal/app/contextx"
+	"gin-admin/internal/app/ginx"
+	"gin-admin/internal/app/schema"
+	"gin-admin/internal/app/service"
 )
 
 var MenuSet = wire.NewSet(wire.Struct(new(MenuAPI), "*"))

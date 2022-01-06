@@ -7,43 +7,43 @@ import (
 	"github.com/casbin/casbin/v2"
 	"github.com/google/wire"
 
-	"github.com/LyricTian/gin-admin/v8/internal/app/dao"
-	"github.com/LyricTian/gin-admin/v8/internal/app/schema"
-	"github.com/LyricTian/gin-admin/v8/pkg/errors"
-	"github.com/LyricTian/gin-admin/v8/pkg/util/hash"
-	"github.com/LyricTian/gin-admin/v8/pkg/util/snowflake"
+	"gin-admin/internal/app/dao"
+	"gin-admin/internal/app/schema"
+	"gin-admin/pkg/errors"
+	"gin-admin/pkg/util/hash"
+	"gin-admin/pkg/util/snowflake"
 )
 
 var UserSet = wire.NewSet(wire.Struct(new(UserSrv), "*"))
 
 type UserSrv struct {
-	Enforcer     *casbin.SyncedEnforcer
-	TransRepo    *dao.TransRepo
-	UserRepo     *dao.UserRepo
-	UserRoleRepo *dao.UserRoleRepo
-	RoleRepo     *dao.RoleRepo
+	Enforcer    *casbin.SyncedEnforcer
+	TransDao    *dao.TransDao
+	UserDao     *dao.UserDao
+	UserRoleDao *dao.UserRoleDao
+	RoleDao     *dao.RoleDao
 }
 
 func (a *UserSrv) Query(ctx context.Context, params schema.UserQueryParam, opts ...schema.UserQueryOptions) (*schema.UserQueryResult, error) {
-	return a.UserRepo.Query(ctx, params, opts...)
+	return a.UserDao.Query(ctx, params, opts...)
 }
 
 func (a *UserSrv) QueryShow(ctx context.Context, params schema.UserQueryParam, opts ...schema.UserQueryOptions) (*schema.UserShowQueryResult, error) {
-	result, err := a.UserRepo.Query(ctx, params, opts...)
+	result, err := a.UserDao.Query(ctx, params, opts...)
 	if err != nil {
 		return nil, err
 	} else if result == nil {
 		return nil, nil
 	}
 
-	userRoleResult, err := a.UserRoleRepo.Query(ctx, schema.UserRoleQueryParam{
+	userRoleResult, err := a.UserRoleDao.Query(ctx, schema.UserRoleQueryParam{
 		UserIDs: result.Data.ToIDs(),
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	roleResult, err := a.RoleRepo.Query(ctx, schema.RoleQueryParam{
+	roleResult, err := a.RoleDao.Query(ctx, schema.RoleQueryParam{
 		IDs: userRoleResult.Data.ToRoleIDs(),
 	})
 	if err != nil {
@@ -54,14 +54,14 @@ func (a *UserSrv) QueryShow(ctx context.Context, params schema.UserQueryParam, o
 }
 
 func (a *UserSrv) Get(ctx context.Context, id uint64, opts ...schema.UserQueryOptions) (*schema.User, error) {
-	item, err := a.UserRepo.Get(ctx, id, opts...)
+	item, err := a.UserDao.Get(ctx, id, opts...)
 	if err != nil {
 		return nil, err
 	} else if item == nil {
 		return nil, errors.ErrNotFound
 	}
 
-	userRoleResult, err := a.UserRoleRepo.Query(ctx, schema.UserRoleQueryParam{
+	userRoleResult, err := a.UserRoleDao.Query(ctx, schema.UserRoleQueryParam{
 		UserID: id,
 	})
 	if err != nil {
@@ -80,17 +80,17 @@ func (a *UserSrv) Create(ctx context.Context, item schema.User) (*schema.IDResul
 
 	item.Password = hash.SHA1String(item.Password)
 	item.ID = snowflake.MustID()
-	err = a.TransRepo.Exec(ctx, func(ctx context.Context) error {
+	err = a.TransDao.Exec(ctx, func(ctx context.Context) error {
 		for _, urItem := range item.UserRoles {
 			urItem.ID = snowflake.MustID()
 			urItem.UserID = item.ID
-			err := a.UserRoleRepo.Create(ctx, *urItem)
+			err := a.UserRoleDao.Create(ctx, *urItem)
 			if err != nil {
 				return err
 			}
 		}
 
-		return a.UserRepo.Create(ctx, item)
+		return a.UserDao.Create(ctx, item)
 	})
 	if err != nil {
 		return nil, err
@@ -108,7 +108,7 @@ func (a *UserSrv) checkUserName(ctx context.Context, item schema.User) error {
 		return errors.New400Response("user_name has been exists")
 	}
 
-	result, err := a.UserRepo.Query(ctx, schema.UserQueryParam{
+	result, err := a.UserDao.Query(ctx, schema.UserQueryParam{
 		PaginationParam: schema.PaginationParam{OnlyCount: true},
 		UserName:        item.UserName,
 	})
@@ -144,24 +144,24 @@ func (a *UserSrv) Update(ctx context.Context, id uint64, item schema.User) error
 	item.CreatedAt = oldItem.CreatedAt
 
 	addUserRoles, delUserRoles := a.compareUserRoles(ctx, oldItem.UserRoles, item.UserRoles)
-	err = a.TransRepo.Exec(ctx, func(ctx context.Context) error {
+	err = a.TransDao.Exec(ctx, func(ctx context.Context) error {
 		for _, aitem := range addUserRoles {
 			aitem.ID = snowflake.MustID()
 			aitem.UserID = id
-			err := a.UserRoleRepo.Create(ctx, *aitem)
+			err := a.UserRoleDao.Create(ctx, *aitem)
 			if err != nil {
 				return err
 			}
 		}
 
 		for _, ritem := range delUserRoles {
-			err := a.UserRoleRepo.Delete(ctx, ritem.ID)
+			err := a.UserRoleDao.Delete(ctx, ritem.ID)
 			if err != nil {
 				return err
 			}
 		}
 
-		return a.UserRepo.Update(ctx, id, item)
+		return a.UserDao.Update(ctx, id, item)
 	})
 	if err != nil {
 		return err
@@ -197,20 +197,20 @@ func (a *UserSrv) compareUserRoles(ctx context.Context, oldUserRoles, newUserRol
 }
 
 func (a *UserSrv) Delete(ctx context.Context, id uint64) error {
-	oldItem, err := a.UserRepo.Get(ctx, id)
+	oldItem, err := a.UserDao.Get(ctx, id)
 	if err != nil {
 		return err
 	} else if oldItem == nil {
 		return errors.ErrNotFound
 	}
 
-	err = a.TransRepo.Exec(ctx, func(ctx context.Context) error {
-		err := a.UserRoleRepo.DeleteByUserID(ctx, id)
+	err = a.TransDao.Exec(ctx, func(ctx context.Context) error {
+		err := a.UserRoleDao.DeleteByUserID(ctx, id)
 		if err != nil {
 			return err
 		}
 
-		return a.UserRepo.Delete(ctx, id)
+		return a.UserDao.Delete(ctx, id)
 	})
 	if err != nil {
 		return err
@@ -230,7 +230,7 @@ func (a *UserSrv) UpdateStatus(ctx context.Context, id uint64, status int) error
 		return nil
 	}
 
-	err = a.UserRepo.UpdateStatus(ctx, id, status)
+	err = a.UserDao.UpdateStatus(ctx, id, status)
 	if err != nil {
 		return err
 	}

@@ -8,7 +8,7 @@ import (
 
 	"github.com/koding/multiconfig"
 
-	"github.com/LyricTian/gin-admin/v8/pkg/util/json"
+	"gin-admin/pkg/util/json"
 )
 
 var (

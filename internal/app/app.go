@@ -10,14 +10,14 @@ import (
 	"syscall"
 	"time"
 
+	"gin-admin/internal/app/config"
+	"gin-admin/pkg/logger"
 	"github.com/LyricTian/captcha"
 	"github.com/LyricTian/captcha/store"
-	"github.com/LyricTian/gin-admin/v8/internal/app/config"
-	"github.com/LyricTian/gin-admin/v8/pkg/logger"
 	"github.com/go-redis/redis"
 	"github.com/google/gops/agent"
 
-	_ "github.com/LyricTian/gin-admin/v8/internal/app/swagger"
+	_ "gin-admin/internal/app/swagger"
 )
 
 type options struct {

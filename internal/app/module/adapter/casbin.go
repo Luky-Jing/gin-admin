@@ -8,9 +8,9 @@ import (
 	"github.com/casbin/casbin/v2/persist"
 	"github.com/google/wire"
 
-	"github.com/LyricTian/gin-admin/v8/internal/app/dao"
-	"github.com/LyricTian/gin-admin/v8/internal/app/schema"
-	"github.com/LyricTian/gin-admin/v8/pkg/logger"
+	"gin-admin/internal/app/dao"
+	"gin-admin/internal/app/schema"
+	"gin-admin/pkg/logger"
 )
 
 var _ persist.Adapter = (*CasbinAdapter)(nil)
@@ -18,11 +18,11 @@ var _ persist.Adapter = (*CasbinAdapter)(nil)
 var CasbinAdapterSet = wire.NewSet(wire.Struct(new(CasbinAdapter), "*"), wire.Bind(new(persist.Adapter), new(*CasbinAdapter)))
 
 type CasbinAdapter struct {
-	RoleRepo         *dao.RoleRepo
-	RoleMenuRepo     *dao.RoleMenuRepo
-	MenuResourceRepo *dao.MenuActionResourceRepo
-	UserRepo         *dao.UserRepo
-	UserRoleRepo     *dao.UserRoleRepo
+	RoleDao         *dao.RoleDao
+	RoleMenuDao     *dao.RoleMenuDao
+	MenuResourceDao *dao.MenuActionResourceDao
+	UserDao         *dao.UserDao
+	UserRoleDao     *dao.UserRoleDao
 }
 
 // Loads all policy rules from the storage.
@@ -45,7 +45,7 @@ func (a *CasbinAdapter) LoadPolicy(model casbinModel.Model) error {
 
 // Load role policy (p,role_id,path,method)
 func (a *CasbinAdapter) loadRolePolicy(ctx context.Context, m casbinModel.Model) error {
-	roleResult, err := a.RoleRepo.Query(ctx, schema.RoleQueryParam{
+	roleResult, err := a.RoleDao.Query(ctx, schema.RoleQueryParam{
 		Status: 1,
 	})
 	if err != nil {
@@ -54,13 +54,13 @@ func (a *CasbinAdapter) loadRolePolicy(ctx context.Context, m casbinModel.Model)
 		return nil
 	}
 
-	roleMenuResult, err := a.RoleMenuRepo.Query(ctx, schema.RoleMenuQueryParam{})
+	roleMenuResult, err := a.RoleMenuDao.Query(ctx, schema.RoleMenuQueryParam{})
 	if err != nil {
 		return err
 	}
 	mRoleMenus := roleMenuResult.Data.ToRoleIDMap()
 
-	menuResourceResult, err := a.MenuResourceRepo.Query(ctx, schema.MenuActionResourceQueryParam{})
+	menuResourceResult, err := a.MenuResourceDao.Query(ctx, schema.MenuActionResourceQueryParam{})
 	if err != nil {
 		return err
 	}
@@ -91,13 +91,13 @@ func (a *CasbinAdapter) loadRolePolicy(ctx context.Context, m casbinModel.Model)
 
 // Load user policy (g,user_id,role_id)
 func (a *CasbinAdapter) loadUserPolicy(ctx context.Context, m casbinModel.Model) error {
-	userResult, err := a.UserRepo.Query(ctx, schema.UserQueryParam{
+	userResult, err := a.UserDao.Query(ctx, schema.UserQueryParam{
 		Status: 1,
 	})
 	if err != nil {
 		return err
 	} else if len(userResult.Data) > 0 {
-		userRoleResult, err := a.UserRoleRepo.Query(ctx, schema.UserRoleQueryParam{})
+		userRoleResult, err := a.UserRoleDao.Query(ctx, schema.UserRoleQueryParam{})
 		if err != nil {
 			return err
 		}

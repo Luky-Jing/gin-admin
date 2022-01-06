@@ -6,17 +6,17 @@ package app
 import (
 	"github.com/google/wire"
 
-	"github.com/LyricTian/gin-admin/v8/internal/app/api"
-	"github.com/LyricTian/gin-admin/v8/internal/app/dao"
-	"github.com/LyricTian/gin-admin/v8/internal/app/module/adapter"
-	"github.com/LyricTian/gin-admin/v8/internal/app/router"
-	"github.com/LyricTian/gin-admin/v8/internal/app/service"
+	"gin-admin/internal/app/api"
+	"gin-admin/internal/app/dao"
+	"gin-admin/internal/app/module/adapter"
+	"gin-admin/internal/app/router"
+	"gin-admin/internal/app/service"
 )
 
 func BuildInjector() (*Injector, func(), error) {
 	wire.Build(
 		InitGormDB,
-		dao.RepoSet,
+		dao.DaoSet,
 		InitAuth,
 		InitCasbin,
 		InitGinEngine,

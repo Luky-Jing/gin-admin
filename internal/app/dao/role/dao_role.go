@@ -2,22 +2,21 @@ package role
 
 import (
 	"context"
-
 	"github.com/google/wire"
 	"gorm.io/gorm"
 
-	"github.com/LyricTian/gin-admin/v8/internal/app/dao/util"
-	"github.com/LyricTian/gin-admin/v8/internal/app/schema"
-	"github.com/LyricTian/gin-admin/v8/pkg/errors"
+	"gin-admin/internal/app/dao/util"
+	"gin-admin/internal/app/schema"
+	"gin-admin/pkg/errors"
 )
 
-var RoleSet = wire.NewSet(wire.Struct(new(RoleRepo), "*"))
+var RoleSet = wire.NewSet(wire.Struct(new(RoleDao), "*"))
 
-type RoleRepo struct {
+type RoleDao struct {
 	DB *gorm.DB
 }
 
-func (a *RoleRepo) getQueryOption(opts ...schema.RoleQueryOptions) schema.RoleQueryOptions {
+func (a *RoleDao) getQueryOption(opts ...schema.RoleQueryOptions) schema.RoleQueryOptions {
 	var opt schema.RoleQueryOptions
 	if len(opts) > 0 {
 		opt = opts[0]
@@ -25,7 +24,7 @@ func (a *RoleRepo) getQueryOption(opts ...schema.RoleQueryOptions) schema.RoleQu
 	return opt
 }
 
-func (a *RoleRepo) Query(ctx context.Context, params schema.RoleQueryParam, opts ...schema.RoleQueryOptions) (*schema.RoleQueryResult, error) {
+func (a *RoleDao) Query(ctx context.Context, params schema.RoleQueryParam, opts ...schema.RoleQueryOptions) (*schema.RoleQueryResult, error) {
 	opt := a.getQueryOption(opts...)
 
 	db := GetRoleDB(ctx, a.DB)
@@ -61,7 +60,7 @@ func (a *RoleRepo) Query(ctx context.Context, params schema.RoleQueryParam, opts
 	return qr, nil
 }
 
-func (a *RoleRepo) Get(ctx context.Context, id uint64, opts ...schema.RoleQueryOptions) (*schema.Role, error) {
+func (a *RoleDao) Get(ctx context.Context, id uint64, opts ...schema.RoleQueryOptions) (*schema.Role, error) {
 	var role Role
 	ok, err := util.FindOne(ctx, GetRoleDB(ctx, a.DB).Where("id=?", id), &role)
 	if err != nil {
@@ -73,24 +72,24 @@ func (a *RoleRepo) Get(ctx context.Context, id uint64, opts ...schema.RoleQueryO
 	return role.ToSchemaRole(), nil
 }
 
-func (a *RoleRepo) Create(ctx context.Context, item schema.Role) error {
+func (a *RoleDao) Create(ctx context.Context, item schema.Role) error {
 	eitem := SchemaRole(item).ToRole()
 	result := GetRoleDB(ctx, a.DB).Create(eitem)
 	return errors.WithStack(result.Error)
 }
 
-func (a *RoleRepo) Update(ctx context.Context, id uint64, item schema.Role) error {
+func (a *RoleDao) Update(ctx context.Context, id uint64, item schema.Role) error {
 	eitem := SchemaRole(item).ToRole()
 	result := GetRoleDB(ctx, a.DB).Where("id=?", id).Updates(eitem)
 	return errors.WithStack(result.Error)
 }
 
-func (a *RoleRepo) Delete(ctx context.Context, id uint64) error {
+func (a *RoleDao) Delete(ctx context.Context, id uint64) error {
 	result := GetRoleDB(ctx, a.DB).Where("id=?", id).Delete(Role{})
 	return errors.WithStack(result.Error)
 }
 
-func (a *RoleRepo) UpdateStatus(ctx context.Context, id uint64, status int) error {
+func (a *RoleDao) UpdateStatus(ctx context.Context, id uint64, status int) error {
 	result := GetRoleDB(ctx, a.DB).Where("id=?", id).Update("status", status)
 	return errors.WithStack(result.Error)
 }

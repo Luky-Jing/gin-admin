@@ -6,18 +6,18 @@
 package app
 
 import (
-	"github.com/LyricTian/gin-admin/v8/internal/app/api"
-	"github.com/LyricTian/gin-admin/v8/internal/app/dao/menu"
-	"github.com/LyricTian/gin-admin/v8/internal/app/dao/role"
-	"github.com/LyricTian/gin-admin/v8/internal/app/dao/user"
-	"github.com/LyricTian/gin-admin/v8/internal/app/dao/util"
-	"github.com/LyricTian/gin-admin/v8/internal/app/module/adapter"
-	"github.com/LyricTian/gin-admin/v8/internal/app/router"
-	"github.com/LyricTian/gin-admin/v8/internal/app/service"
+	"gin-admin/internal/app/api"
+	"gin-admin/internal/app/dao/menu"
+	"gin-admin/internal/app/dao/role"
+	"gin-admin/internal/app/dao/user"
+	"gin-admin/internal/app/dao/util"
+	"gin-admin/internal/app/module/adapter"
+	"gin-admin/internal/app/router"
+	"gin-admin/internal/app/service"
 )
 
 import (
-	_ "github.com/LyricTian/gin-admin/v8/internal/app/swagger"
+	_ "gin-admin/internal/app/swagger"
 )
 
 // Injectors from wire.go:
@@ -32,27 +32,27 @@ func BuildInjector() (*Injector, func(), error) {
 		cleanup()
 		return nil, nil, err
 	}
-	roleRepo := &role.RoleRepo{
+	roleDao := &role.RoleDao{
 		DB: db,
 	}
-	roleMenuRepo := &role.RoleMenuRepo{
+	roleMenuDao := &role.RoleMenuDao{
 		DB: db,
 	}
-	menuActionResourceRepo := &menu.MenuActionResourceRepo{
+	menuActionResourceDao := &menu.MenuActionResourceDao{
 		DB: db,
 	}
-	userRepo := &user.UserRepo{
+	userDao := &user.UserDao{
 		DB: db,
 	}
-	userRoleRepo := &user.UserRoleRepo{
+	userRoleDao := &user.UserRoleDao{
 		DB: db,
 	}
 	casbinAdapter := &adapter.CasbinAdapter{
-		RoleRepo:         roleRepo,
-		RoleMenuRepo:     roleMenuRepo,
-		MenuResourceRepo: menuActionResourceRepo,
-		UserRepo:         userRepo,
-		UserRoleRepo:     userRoleRepo,
+		RoleDao:         roleDao,
+		RoleMenuDao:     roleMenuDao,
+		MenuResourceDao: menuActionResourceDao,
+		UserDao:         userDao,
+		UserRoleDao:     userRoleDao,
 	}
 	syncedEnforcer, cleanup3, err := InitCasbin(casbinAdapter)
 	if err != nil {
@@ -60,20 +60,20 @@ func BuildInjector() (*Injector, func(), error) {
 		cleanup()
 		return nil, nil, err
 	}
-	menuRepo := &menu.MenuRepo{
+	menuDao := &menu.MenuDao{
 		DB: db,
 	}
-	menuActionRepo := &menu.MenuActionRepo{
+	menuActionDao := &menu.MenuActionDao{
 		DB: db,
 	}
 	loginSrv := &service.LoginSrv{
-		Auth:           auther,
-		UserRepo:       userRepo,
-		UserRoleRepo:   userRoleRepo,
-		RoleRepo:       roleRepo,
-		RoleMenuRepo:   roleMenuRepo,
-		MenuRepo:       menuRepo,
-		MenuActionRepo: menuActionRepo,
+		Auth:          auther,
+		UserDao:       userDao,
+		UserRoleDao:   userRoleDao,
+		RoleDao:       roleDao,
+		RoleMenuDao:   roleMenuDao,
+		MenuDao:       menuDao,
+		MenuActionDao: menuActionDao,
 	}
 	loginAPI := &api.LoginAPI{
 		LoginSrv: loginSrv,
@@ -82,31 +82,31 @@ func BuildInjector() (*Injector, func(), error) {
 		DB: db,
 	}
 	menuSrv := &service.MenuSrv{
-		TransRepo:              trans,
-		MenuRepo:               menuRepo,
-		MenuActionRepo:         menuActionRepo,
-		MenuActionResourceRepo: menuActionResourceRepo,
+		TransDao:              trans,
+		MenuDao:               menuDao,
+		MenuActionDao:         menuActionDao,
+		MenuActionResourceDao: menuActionResourceDao,
 	}
 	menuAPI := &api.MenuAPI{
 		MenuSrv: menuSrv,
 	}
 	roleSrv := &service.RoleSrv{
-		Enforcer:               syncedEnforcer,
-		TransRepo:              trans,
-		RoleRepo:               roleRepo,
-		RoleMenuRepo:           roleMenuRepo,
-		UserRepo:               userRepo,
-		MenuActionResourceRepo: menuActionResourceRepo,
+		Enforcer:              syncedEnforcer,
+		TransDao:              trans,
+		RoleDao:               roleDao,
+		RoleMenuDao:           roleMenuDao,
+		UserDao:               userDao,
+		MenuActionResourceDao: menuActionResourceDao,
 	}
 	roleAPI := &api.RoleAPI{
 		RoleSrv: roleSrv,
 	}
 	userSrv := &service.UserSrv{
-		Enforcer:     syncedEnforcer,
-		TransRepo:    trans,
-		UserRepo:     userRepo,
-		UserRoleRepo: userRoleRepo,
-		RoleRepo:     roleRepo,
+		Enforcer:    syncedEnforcer,
+		TransDao:    trans,
+		UserDao:     userDao,
+		UserRoleDao: userRoleDao,
+		RoleDao:     roleDao,
 	}
 	userAPI := &api.UserAPI{
 		UserSrv: userSrv,
